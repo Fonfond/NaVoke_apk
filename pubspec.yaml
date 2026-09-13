@@ -1,0 +1,33 @@
+name: navoke_app
+description: Приложение доставки еды НаVoke
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '^3.11.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.3.0
+
+  # ✅ ДОБАВЬ ЭТУ СТРОКУ:
+  firebase_messaging: ^15.2.0
+  firebase_core: ^3.12.0   # (Тоже нужен для Firebase)
+  shared_preferences: ^2.5.3  # для хранения токена
+  flutter_secure_storage: ^9.2.4 # безопасное хранение (опционально)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#FF6B35"
+  adaptive_icon_foreground: "assets/icon.png"
