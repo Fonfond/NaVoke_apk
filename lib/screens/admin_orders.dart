@@ -35,21 +35,31 @@ class _AdminOrdersState extends State<AdminOrders> {
 
   Future<void> _changeStatus(int orderId, String newStatus) async {
     try {
-      await ApiService.request('/orders/$orderId/update-status/', method: 'PUT', body: {'status': newStatus}, auth: true);
+      await ApiService.request(
+        '/orders/$orderId/update-status/',
+        method: 'PUT',
+        body: {'status': newStatus},
+        auth: true,
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Статус обновлён')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('✅ Статус обновлён')));
         _loadOrders();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_isLoading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -70,7 +80,9 @@ class _AdminOrdersState extends State<AdminOrders> {
           return Card(
             elevation: 2,
             margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: InkWell(
               onTap: () {
                 // ✅ ОТКРЫВАЕМ ДЕТАЛЬНЫЙ ЭКРАН
@@ -89,7 +101,10 @@ class _AdminOrdersState extends State<AdminOrders> {
                     // ✅ НОМЕР ЗАКАЗА (ПЕРЕНОС ТЕКСТА)
                     Text(
                       'Заказ #$orderNumber',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
 
@@ -108,15 +123,24 @@ class _AdminOrdersState extends State<AdminOrders> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: status == 'delivered' ? Colors.green.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.2),
+                            color: status == 'delivered'
+                                ? Colors.green.withValues(alpha: 0.2)
+                                : Colors.blue.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            status == 'delivered' ? '✅ Доставлен' : '⏳ В процессе',
+                            status == 'delivered'
+                                ? '✅ Доставлен'
+                                : '⏳ В процессе',
                             style: TextStyle(
-                              color: status == 'delivered' ? Colors.green : Colors.blue,
+                              color: status == 'delivered'
+                                  ? Colors.green
+                                  : Colors.blue,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -128,17 +152,51 @@ class _AdminOrdersState extends State<AdminOrders> {
                             value: status,
                             isExpanded: true,
                             underline: const SizedBox(),
-                            items: [
-                              DropdownMenuItem(value: 'new', child: Text('Новый')),
-                              DropdownMenuItem(value: 'confirmed', child: Text('Подтверждён')),
-                              DropdownMenuItem(value: 'cooking', child: Text('Готовится')),
-                              DropdownMenuItem(value: 'ready', child: Text('Готов')),
-                              DropdownMenuItem(value: 'delivering', child: Text('В доставке')),
-                              DropdownMenuItem(value: 'delivered', child: Text('Доставлен')),
-                              DropdownMenuItem(value: 'cancelled', child: Text('Отменён')),
-                            ],
+                            items: () {
+                              const labels = {
+                                'new': 'Новый',
+                                'confirmed': 'Подтверждён',
+                                'cooking': 'Готовится',
+                                'ready': 'Готов',
+                                'delivering': 'В доставке',
+                                'delivered': 'Доставлен',
+                                'cancelled': 'Отменён',
+                              };
+                              const transitions = {
+                                'new': ['confirmed', 'cancelled'],
+                                'confirmed': ['cooking', 'cancelled'],
+                                'cooking': ['ready', 'cancelled'],
+                                'ready': [
+                                  'delivering',
+                                  'delivered',
+                                  'cancelled',
+                                ],
+                                'delivering': ['delivered', 'cancelled'],
+                                'delivered': <String>[],
+                                'cancelled': <String>[],
+                              };
+                              final next = <String>{
+                                status,
+                                ...(transitions[status] ?? const <String>[]),
+                              }.toList();
+                              if (status != 'delivered' &&
+                                  order['payment_method'] == 'online' &&
+                                  order['payment_status'] != 'paid') {
+                                next.remove('delivered');
+                              }
+                              return next
+                                  .map(
+                                    (value) => DropdownMenuItem(
+                                      value: value,
+                                      child: Text(labels[value] ?? value),
+                                    ),
+                                  )
+                                  .toList();
+                            }(),
                             onChanged: (value) {
-                              if (value != null) _changeStatus(order['id'], value);
+                              if (value != null && value != status) {
+                                _changeStatus(order['id'], value);
+                              }
                             },
                           ),
                         ),
@@ -193,9 +251,9 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isUpdating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
       }
     }
   }
@@ -246,15 +304,21 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                     ),
                     child: _isUpdating
                         ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text('Оплачен'),
                   )
                 else
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -272,15 +336,24 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             const SizedBox(height: 24),
 
             // ✅ ИНФОРМАЦИЯ О КЛИЕНТЕ
-            const Text('Информация о клиенте', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Информация о клиенте',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            _buildInfoRow('Имя', order['full_name'] ?? order['user_name'] ?? '—'),
+            _buildInfoRow(
+              'Имя',
+              order['full_name'] ?? order['user_name'] ?? '—',
+            ),
             _buildInfoRow('Телефон', order['phone'] ?? '—'),
-            _buildInfoRow('Email', order['email'] ?? '—'),
+            _buildInfoRow('Email', order['customer_email'] ?? '—'),
             const Divider(height: 32),
 
             // ✅ АДРЕС ДОСТАВКИ
-            const Text('Адрес доставки', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Адрес доставки',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             _buildInfoRow('Адрес', order['delivery_address'] ?? 'Самовывоз'),
             _buildInfoRow('Дата', order['delivery_date'] ?? '—'),
@@ -288,7 +361,10 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             const Divider(height: 32),
 
             // ✅ СОСТАВ ЗАКАЗА
-            const Text('Состав заказа', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Состав заказа',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             if (items.isEmpty)
               const Text('Нет товаров', style: TextStyle(color: Colors.grey))
@@ -299,8 +375,13 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${item['quantity'] ?? 1}x ${item['product_name'] ?? 'Товар'}'),
-                      Text('${item['price_at_order'] ?? 0} ₽', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        '${item['quantity'] ?? 1}x ${item['product_name'] ?? 'Товар'}',
+                      ),
+                      Text(
+                        '${item['price_at_order'] ?? 0} ₽',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 );
@@ -308,20 +389,39 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
             const Divider(height: 32),
 
             // ✅ КОЛИЧЕСТВО ПЕРСОН И ПРИБОРОВ
-            const Text('Дополнительно', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Дополнительно',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            _buildInfoRow('Количество персон', '${order['persons_count'] ?? 1}'),
-            _buildInfoRow('Количество приборов', '${order['cutlery_count'] ?? 1}'),
+            _buildInfoRow(
+              'Количество персон',
+              '${order['persons_count'] ?? 1}',
+            ),
+            _buildInfoRow(
+              'Количество приборов',
+              '${order['cutlery_count'] ?? 1}',
+            ),
             const Divider(height: 32),
 
             // ✅ ИТОГО
-            const Text('Итого', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Итого',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Сумма заказа'),
-                Text('${order['total_amount'] ?? 0} ₽', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFEF7F1A))),
+                Text(
+                  '${order['total_amount'] ?? 0} ₽',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFFEF7F1A),
+                  ),
+                ),
               ],
             ),
           ],
