@@ -59,7 +59,9 @@ class _HomePageState extends State<HomePage> {
 
       // ✅ ФИЛЬТРУЕМ ТОЛЬКО ХИТЫ
       List<dynamic> allProducts = prods['results'] ?? [];
-      List<dynamic> hits = allProducts.where((p) => p['is_hit'] == true).toList();
+      List<dynamic> hits = allProducts
+          .where((p) => p['is_hit'] == true)
+          .toList();
       if (hits.isEmpty) {
         hits = allProducts.take(6).toList();
       }
@@ -101,10 +103,12 @@ class _HomePageState extends State<HomePage> {
 
     if (mounted) setState(() => _isSearching = true);
     try {
-      final result = await ApiService.request('/products/live-search/?q=$query');
+      final result = await ApiService.request(
+        '/products/live-search/?q=$query',
+      );
       if (mounted) {
         setState(() {
-          _searchResults = result['results'] ?? [];
+          _searchResults = result is List ? result : (result['results'] ?? []);
         });
       }
     } catch (e) {
@@ -154,8 +158,14 @@ class _HomePageState extends State<HomePage> {
                             decoration: const InputDecoration(
                               hintText: 'Поиск блюд...',
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              suffixIcon: Icon(Icons.search, color: Colors.grey),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              suffixIcon: Icon(
+                                Icons.search,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         ),
@@ -178,7 +188,11 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           Text(
                             _bannerTitle,
-                            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                           Text(
                             _bannerSubtitle,
@@ -189,7 +203,9 @@ class _HomePageState extends State<HomePage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const CatalogPage()),
+                                MaterialPageRoute(
+                                  builder: (_) => const CatalogPage(),
+                                ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -205,14 +221,22 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   // ✅ БИЗНЕС-ЛАНЧ (если есть позиции)
-                  if (_lunchMenu != null && _lunchMenu!['items'] != null && (_lunchMenu!['items'] as List).isNotEmpty)
+                  if (_lunchMenu != null &&
+                      _lunchMenu!['items'] != null &&
+                      (_lunchMenu!['items'] as List).isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Column(
                         children: [
                           Text(
                             _lunchMenu!['title'] ?? 'Бизнес-ланч',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           ...(_lunchMenu!['items'] as List).map((item) {
@@ -221,7 +245,8 @@ class _HomePageState extends State<HomePage> {
                                 title: Text(item['name'] ?? ''),
                                 subtitle: Text('${item['price'] ?? 0} ₽'),
                                 trailing: ElevatedButton(
-                                  onPressed: () => _addToCart(context, item['product_id']),
+                                  onPressed: () =>
+                                      _addToCart(context, item['product_id']),
                                   child: const Text('В корзину'),
                                 ),
                               ),
@@ -233,7 +258,13 @@ class _HomePageState extends State<HomePage> {
                   // ✅ КАТЕГОРИИ
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text('Категории', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Категории',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   SizedBox(
                     height: 130,
@@ -248,7 +279,8 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => CatalogPage(initialCategory: cat['slug']),
+                                builder: (_) =>
+                                    CatalogPage(initialCategory: cat['slug']),
                               ),
                             );
                           },
@@ -261,7 +293,11 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
-                                BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2)),
+                                BoxShadow(
+                                  color: Colors.grey.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
                               ],
                             ),
                             child: Column(
@@ -270,12 +306,25 @@ class _HomePageState extends State<HomePage> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
-                                    ApiService.getFullImageUrl(cat['image_url']),
-                                    width: 40, height: 40, fit: BoxFit.contain,
+                                    ApiService.getFullImageUrl(
+                                      cat['image_url'],
+                                    ),
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(cat['name'] ?? '', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                Text(
+                                  cat['name'] ?? '',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -286,22 +335,32 @@ class _HomePageState extends State<HomePage> {
                   // ✅ ПОПУЛЯРНЫЕ ТОВАРЫ (ВЕРТИКАЛЬНО)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Text('Популярное', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Популярное',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisExtent: 290,  // ✅ ИЗМЕНЕНО С 0.75 НА 0.85
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 290, // ✅ ИЗМЕНЕНО С 0.75 НА 0.85
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
                       itemCount: popularProducts.length,
                       itemBuilder: (context, index) {
-                        return _buildProductCard(context, popularProducts[index]);
+                        return _buildProductCard(
+                          context,
+                          popularProducts[index],
+                        );
                       },
                     ),
                   ),
@@ -318,24 +377,30 @@ class _HomePageState extends State<HomePage> {
                 child: _searchResults.isEmpty
                     ? const Center(child: Text('Ничего не найдено'))
                     : ListView.builder(
-                  itemCount: _searchResults.length,
-                  itemBuilder: (context, index) {
-                    final item = _searchResults[index];
-                    return ListTile(
-                      leading: Image.network(ApiService.getFullImageUrl(item['image_url']), width: 40, height: 40, fit: BoxFit.cover),
-                      title: Text(item['name'] ?? ''),
-                      subtitle: Text('${item['price'] ?? 0} ₽'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailScreen(product: item),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                        itemCount: _searchResults.length,
+                        itemBuilder: (context, index) {
+                          final item = _searchResults[index];
+                          return ListTile(
+                            leading: Image.network(
+                              ApiService.getFullImageUrl(item['image_url']),
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                            ),
+                            title: Text(item['name'] ?? ''),
+                            subtitle: Text('${item['price'] ?? 0} ₽'),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailScreen(product: item),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
               ),
             ),
         ],
@@ -363,7 +428,9 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: Image.network(
                 ApiService.getFullImageUrl(product['image_url']),
                 height: 110, // ✅ УМЕНЬШЕНА ВЫСОТА
@@ -381,11 +448,18 @@ class _HomePageState extends State<HomePage> {
                       product['name'] ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     Text(
                       '${product['price'] ?? 0} ₽',
-                      style: const TextStyle(color: Color(0xFFEF7F1A), fontWeight: FontWeight.bold, fontSize: 17),
+                      style: const TextStyle(
+                        color: Color(0xFFEF7F1A),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
                     ),
                     SizedBox(
                       width: double.infinity,
@@ -396,7 +470,10 @@ class _HomePageState extends State<HomePage> {
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 4),
                         ),
-                        child: const Text('В корзину', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          'В корзину',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                     ),
                   ],
@@ -412,21 +489,25 @@ class _HomePageState extends State<HomePage> {
   Future<void> _addToCart(BuildContext context, int productId) async {
     try {
       final token = await AuthService.getToken();
-
-      if (token != null) {
-        await ApiService.request(
-            '/orders/cart/add/',
-            method: 'POST',
-            body: {'product_id': productId, 'quantity': 1},
-            auth: true
-        );
-      } else {
-        await ApiService.request(
-            '/orders/guest-cart/',
-            method: 'POST',
-            body: {'product_id': productId, 'quantity': 1}
-        );
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '⚠️ Войдите в систему, чтобы добавить товар в корзину',
+              ),
+            ),
+          );
+        }
+        return;
       }
+
+      await ApiService.request(
+        '/orders/cart/add/',
+        method: 'POST',
+        body: {'product_id': productId, 'quantity': 1},
+        auth: true,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -435,9 +516,9 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
       }
     }
   }

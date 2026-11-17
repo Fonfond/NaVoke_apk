@@ -14,6 +14,8 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _quantity = 1;
+  List<dynamic> _variants = [];
+  int? _selectedVariantId;
   List<dynamic> _reviews = [];
   bool _isLoadingReviews = true;
   bool _isFavorite = false;
@@ -25,6 +27,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _variants = (widget.product['variants'] as List?) ?? [];
+    if (_variants.isNotEmpty) {
+      _selectedVariantId = int.tryParse(_variants.first['id'].toString());
+    }
     _loadReviews();
     _checkFavorite();
   }
@@ -62,7 +68,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _loadReviews() async {
     try {
-      final response = await ApiService.request('/products/${widget.product['id']}/reviews/');
+      final response = await ApiService.request(
+        '/products/${widget.product['id']}/reviews/',
+      );
       setState(() {
         _reviews = response['results'] ?? [];
         _isLoadingReviews = false;
@@ -74,7 +82,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _submitReview() async {
     if (_rating < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Поставьте оценку')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Поставьте оценку')));
       return;
     }
     try {
@@ -84,12 +94,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         body: {'rating': _rating, 'text': _reviewTextController.text.trim()},
         auth: true,
       );
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Отзыв опубликован!')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('✅ Отзыв опубликован!')));
       _reviewTextController.clear();
       _rating = 0;
       _loadReviews();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
     }
   }
 
@@ -112,21 +126,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _isFavorite = result['status'] == 'added';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isFavorite ? '❤️ Добавлено в избранное' : '💔 Удалено из избранного')),
+        SnackBar(
+          content: Text(
+            _isFavorite
+                ? '❤️ Добавлено в избранное'
+                : '💔 Удалено из избранного',
+          ),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Ошибка: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
-    final price = (product['price'] ?? 0).toDouble();
+    Map<String, dynamic>? selectedVariant;
+    for (final v in _variants) {
+      if (int.tryParse(v['id'].toString()) == _selectedVariantId) {
+        selectedVariant = Map<String, dynamic>.from(v as Map);
+        break;
+      }
+    }
+    final price = (selectedVariant?['price'] ?? product['price'] ?? 0)
+        .toDouble();
+    final weight = selectedVariant?['weight'] ?? product['weight'] ?? 0;
     final imageUrl = ApiService.getFullImageUrl(product['image_url']);
-    final hasVariants = product['has_variants'] ?? false;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -150,12 +178,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   GestureDetector(
                     onTap: _goBack,
-                    child: const Text('Главная', style: TextStyle(color: Colors.grey)),
+                    child: const Text(
+                      'Главная',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ),
                   const Text(' / ', style: TextStyle(color: Colors.grey)),
                   const Text('Каталог', style: TextStyle(color: Colors.grey)),
                   const Text(' / ', style: TextStyle(color: Colors.grey)),
-                  Text(product['name'] ?? '', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  Text(
+                    product['name'] ?? '',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -179,7 +216,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: Colors.grey.shade200,
-                        child: const Center(child: Icon(Icons.image_not_supported, size: 60, color: Colors.grey)),
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 60,
+                            color: Colors.grey,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -197,7 +240,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   Text(
                     product['name'] ?? 'Товар',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     product['category_name'] ?? '',
@@ -205,14 +251,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${product['weight'] ?? 0} г · ${product['ingredients'] ?? ''}',
+                    '$weight г · ${product['ingredients'] ?? ''}',
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     '${price.toStringAsFixed(0)} ₽',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFEF7F1A)),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFEF7F1A),
+                    ),
                   ),
+                  if (_variants.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      value: _selectedVariantId,
+                      decoration: const InputDecoration(
+                        labelText: 'Размер',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _variants.map((variant) {
+                        final id = int.tryParse(variant['id'].toString());
+                        return DropdownMenuItem<int>(
+                          value: id,
+                          child: Text(
+                            '${variant['name'] ?? 'Стандарт'} — ${variant['price']} ₽ (${variant['weight']} г)',
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedVariantId = value);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -239,7 +311,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                         Text(
                           '$_quantity',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.add, size: 20),
@@ -275,10 +350,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEF7F1A),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     elevation: 0,
                   ),
-                  child: const Text('В корзину', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'В корзину',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),
@@ -288,7 +368,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             // ===== ОТЗЫВЫ =====
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Отзывы', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Отзывы',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
 
             if (_isLoadingReviews)
@@ -299,7 +382,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             else if (_reviews.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('У этого товара пока нет отзывов. Будьте первым!', style: TextStyle(color: Colors.grey)),
+                child: Text(
+                  'У этого товара пока нет отзывов. Будьте первым!',
+                  style: TextStyle(color: Colors.grey),
+                ),
               )
             else
               ListView.builder(
@@ -321,12 +407,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       children: [
                         Row(
                           children: [
-                            Text(rev['user_name'] ?? 'Аноним', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              rev['user_name'] ?? 'Аноним',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Row(
                               children: List.generate(5, (i) {
                                 return Icon(
-                                  i < (rev['rating'] ?? 0) ? Icons.star : Icons.star_border,
+                                  i < (rev['rating'] ?? 0)
+                                      ? Icons.star
+                                      : Icons.star_border,
                                   color: Colors.amber,
                                   size: 16,
                                 );
@@ -347,7 +440,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             // ===== ФОРМА ОТЗЫВА =====
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text('Оставить отзыв', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Оставить отзыв',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -397,24 +493,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Future<void> _addToCart(BuildContext context, int productId, int quantity) async {
+  Future<void> _addToCart(
+    BuildContext context,
+    int productId,
+    int quantity,
+  ) async {
     try {
       final token = await AuthService.getToken();
-
-      if (token != null) {
-        await ApiService.request(
-            '/orders/cart/add/',
-            method: 'POST',
-            body: {'product_id': productId, 'quantity': quantity},
-            auth: true
-        );
-      } else {
-        await ApiService.request(
-            '/orders/guest-cart/',
-            method: 'POST',
-            body: {'product_id': productId, 'quantity': quantity}
-        );
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '⚠️ Войдите в систему, чтобы добавить товар в корзину',
+              ),
+            ),
+          );
+        }
+        return;
       }
+
+      await ApiService.request(
+        '/orders/cart/add/',
+        method: 'POST',
+        body: {
+          'product_id': productId,
+          if (_selectedVariantId != null) 'variant_id': _selectedVariantId,
+          'quantity': quantity,
+        },
+        auth: true,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -423,9 +531,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Ошибка: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
       }
     }
   }

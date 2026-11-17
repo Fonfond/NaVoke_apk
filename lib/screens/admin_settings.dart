@@ -31,7 +31,10 @@ class _AdminSettingsState extends State<AdminSettings> {
   Future<void> _loadSettings() async {
     try {
       final data = await ApiService.request('/core/settings/', auth: true);
-      final lunchMenu = await ApiService.request('/products/lunch-menu/', auth: true);
+      final lunchMenu = await ApiService.request(
+        '/products/lunch-menu/',
+        auth: true,
+      );
       if (mounted) {
         setState(() {
           _bannerTitle.text = data['banner_title'] ?? '';
@@ -51,34 +54,49 @@ class _AdminSettingsState extends State<AdminSettings> {
 
   Future<void> _saveSettings() async {
     try {
-      await ApiService.request('/core/settings/', method: 'PUT', body: {
-        'banner_title': _bannerTitle.text,
-        'banner_subtitle': _bannerSubtitle.text,
-        'delivery_base_cost': int.tryParse(_deliveryCost.text) ?? 150,
-        'bonus_rate': double.tryParse(_bonusRate.text) ?? 5,
-      }, auth: true);
+      await ApiService.request(
+        '/core/settings/',
+        method: 'PUT',
+        body: {
+          'banner_title': _bannerTitle.text,
+          'banner_subtitle': _bannerSubtitle.text,
+          'delivery_base_cost': int.tryParse(_deliveryCost.text) ?? 150,
+          'bonus_rate': double.tryParse(_bonusRate.text) ?? 5,
+        },
+        auth: true,
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Настройки сохранены')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('✅ Настройки сохранены')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
       }
     }
   }
 
   Future<void> _saveLunchMenu() async {
     try {
-      await ApiService.request('/products/lunch-menu/', method: 'PUT', body: {
-        'title': _lunchTitle.text,
-        'items': _lunchItems,
-      }, auth: true);
+      await ApiService.request(
+        '/products/lunch-menu/',
+        method: 'POST',
+        body: {'title': _lunchTitle.text, 'items': _lunchItems},
+        auth: true,
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Меню бизнес-ланча сохранено!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Меню бизнес-ланча сохранено!')),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Ошибка: $e')));
       }
     }
   }
@@ -97,7 +115,8 @@ class _AdminSettingsState extends State<AdminSettings> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_isLoading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
       appBar: AppBar(
@@ -111,12 +130,17 @@ class _AdminSettingsState extends State<AdminSettings> {
         child: ListView(
           children: [
             // ✅ БАННЕР
-            const Text('Баннер', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Баннер',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             TextField(
               controller: _bannerTitle,
               decoration: InputDecoration(
                 labelText: 'Заголовок баннера',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -124,40 +148,57 @@ class _AdminSettingsState extends State<AdminSettings> {
               controller: _bannerSubtitle,
               decoration: InputDecoration(
                 labelText: 'Подзаголовок',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
             // ✅ ДОСТАВКА
-            const Text('Доставка', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Доставка',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             TextField(
               controller: _deliveryCost,
               decoration: InputDecoration(
                 labelText: 'Стоимость доставки (₽)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
             // ✅ БОНУСЫ
-            const Text('Бонусы', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Бонусы',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             TextField(
               controller: _bonusRate,
               decoration: InputDecoration(
                 labelText: 'Бонусов за 100 ₽',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
             // ✅ БИЗНЕС-ЛАНЧ
-            const Text('Бизнес-ланч', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Бизнес-ланч',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             TextField(
               controller: _lunchTitle,
               decoration: InputDecoration(
                 labelText: 'Заголовок меню',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -171,14 +212,21 @@ class _AdminSettingsState extends State<AdminSettings> {
                       Expanded(
                         child: TextField(
                           controller: TextEditingController(text: item['name']),
-                          decoration: const InputDecoration(labelText: 'Название блюда'),
+                          onChanged: (value) => item['name'] = value,
+                          decoration: const InputDecoration(
+                            labelText: 'Название блюда',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       SizedBox(
                         width: 80,
                         child: TextField(
-                          controller: TextEditingController(text: item['price'].toString()),
+                          controller: TextEditingController(
+                            text: item['price'].toString(),
+                          ),
+                          onChanged: (value) =>
+                              item['price'] = int.tryParse(value) ?? 0,
                           decoration: const InputDecoration(labelText: 'Цена'),
                         ),
                       ),
@@ -220,9 +268,14 @@ class _AdminSettingsState extends State<AdminSettings> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEF7F1A),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                 ),
-                child: const Text('Сохранить настройки', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Сохранить настройки',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
