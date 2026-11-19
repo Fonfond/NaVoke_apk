@@ -33,18 +33,35 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    final identifier = _phoneController.text.trim();
+    final password = _passwordController.text;
+
+    if (identifier.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите телефон/логин и пароль')),
+      );
+      return;
+    }
+
+    if (!_isLogin && password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Пароль должен быть не короче 8 символов')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       if (_isLogin) {
-        // ✅ Вход по телефону
-        await AuthService.login(_phoneController.text.trim(), _passwordController.text);
+        // ✅ Вход по телефону или username
+        await AuthService.login(identifier, password);
       } else {
         // ✅ Регистрация
         await AuthService.register({
-          'phone': _phoneController.text.trim(),
+          'phone': identifier,
           'full_name': _fullNameController.text.trim(),
-          'password': _passwordController.text,
-          'password2': _passwordController.text,
+          'password': password,
+          'password2': password,
         });
         await FirebaseService().init();
       }
@@ -56,9 +73,14 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        final message = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -83,7 +105,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Телефон',
+                  labelText: 'Телефон или логин',
                   hintText: '+7 (999) 123-45-67',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,

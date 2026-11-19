@@ -27,23 +27,57 @@ class AuthService {
     await prefs.remove('access_token');
   }
 
-  static Future<Map<String, dynamic>> login(String username, String password) async {
-    // ✅ ПРЕОБРАЗУЕМ ТЕЛЕФОН В ЧИСТЫЙ ВИД (БЕЗ +, ПРОБЕЛОВ, СКОБОК)
-    final cleanPhone = username.replaceAll(RegExp(r'[^0-9]'), '');
-    final loginUsername = cleanPhone.startsWith('8') ? '7${cleanPhone.substring(1)}' : cleanPhone;
+  static String _errorMessage(http.Response response, String fallback) {
+    try {
+      final data = jsonDecode(response.body);
+      if (data is Map) {
+        final detail = data['detail'] ?? data['error'];
+        if (detail != null) return detail.toString();
+        if (data.isNotEmpty) {
+          final entry = data.entries.first;
+          final value = entry.value;
+          return '${entry.key}: ${value is List ? value.join(' ') : value}';
+        }
+      }
+    } catch (_) {}
+    return fallback;
+  }
 
-    final response = await http.post(
-      Uri.parse('$apiUrl/users/login/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': loginUsername, 'password': password}),
-    );
+  static Future<Map<String, dynamic>> login(String username, String password) async {
+    final loginUsername = username.trim();
+    if (loginUsername.isEmpty || password.isEmpty) {
+      throw Exception('Введите телефон/логин и пароль');
+    }
+
+    http.Response response;
+    try {
+      response = await http
+          .post(
+            Uri.parse('$apiUrl/users/login/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'username': loginUsername,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      throw Exception('Нет соединения с сервером. Проверьте интернет.');
+    }
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       await saveToken(data['access']);
-      return data;
-    } else {
-      throw Exception('Неверный логин или пароль');
+      return Map<String, dynamic>.from(data as Map);
     }
+
+    if (response.statusCode == 401) {
+      throw Exception('Неверный телефон/логин или пароль');
+    }
+    throw Exception(_errorMessage(response, 'Ошибка входа'));
   }
 
   static Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
@@ -51,17 +85,27 @@ class AuthService {
     userData.remove('username');
     userData.remove('email');
 
-    final response = await http.post(
-      Uri.parse('$apiUrl/users/register/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(userData),
-    );
+    http.Response response;
+    try {
+      response = await http
+          .post(
+            Uri.parse('$apiUrl/users/register/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(userData),
+          )
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      throw Exception('Нет соединения с сервером. Проверьте интернет.');
+    }
+
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
       await saveToken(data['access']);
-      return data;
-    } else {
-      throw Exception(jsonDecode(response.body)['error'] ?? 'Ошибка регистрации');
+      return Map<String, dynamic>.from(data as Map);
     }
+    throw Exception(_errorMessage(response, 'Ошибка регистрации'));
   }
 }
